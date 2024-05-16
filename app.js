@@ -1,42 +1,59 @@
-// Função para calcular o IMC
-function calcularIMC(peso, altura) {
-    if (isNaN(peso) || isNaN(altura) || peso <= 0 || altura <= 0) {
-        return "Por favor, insira valores válidos para peso e altura.";
-    }
+const express = require('express');
+const path = require('path');
+const app = express();
+const port = 3000;
 
-    const imc = peso / (altura * altura);
-    let mensagem = "Seu IMC é: " + imc.toFixed(2);
+app.use(express.urlencoded({ extended: true }));
 
-    if (imc < 18.5) {
-        mensagem += "\nVocê está abaixo do peso ideal.";
-    } else if (imc < 24.9) {
-        mensagem += "\nVocê está dentro da faixa de peso ideal.";
-    } else if (imc < 29.9) {
-        mensagem += "\nVocê está com sobrepeso.";
-    } else {
-        mensagem += "\nVocê está na faixa da obesidade.";
-    }
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'calculadoradeimc.html'));
+});
 
-    return mensagem;
+// Rota para processar o formulário
+app.post('/', (req, res) => {
+  let peso = parseFloat(req.body.peso);
+  let alturaCm = parseFloat(req.body.altura);
+  let alturaM = alturaCm / 100;
+
+  let imc = peso / (alturaM * alturaM);
+  let resultado = `Seu IMC é ${imc.toFixed(2)}`;
+
+  if (imc < 18.5) {
+    resultado += "\nVocê está abaixo do peso ideal.";
+} else if (imc < 24.9) {
+    resultado += "\nVocê está dentro da faixa de peso ideal.";
+} else if (imc < 29.9) {
+    resultado += "\nVocê está com sobrepeso.";
+} else {
+    resultado += "\nVocê está na faixa da obesidade.";
 }
 
-function calculadora() {
-    // Recebe os argumentos
-    const args = process.argv.slice(2);
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calculadora de IMC</title>
+    </head>
+    <body>
+        <h1>Calculadora de IMC</h1>
+        <form action="/" method="post">
+            <label for="peso">Peso (kg):</label>
+            <input type="number" id="peso" name="peso" required><br><br>
+            
+            <label for="altura">Altura (cm):</label>
+            <input type="number" id="altura" name="altura" required><br><br>
+            
+            <button type="submit">Calcular</button>
+        </form>
 
-    // Verificando os argumentos
-    if (args.length !== 2) {
-        console.log("Preencher no terminal da seguinte forma: node app.js <peso> <altura>");
-        return;
-    }
+        <div id="resultado">${resultado}</div>
+    </body>
+    </html>
+  `);
+});
 
-    // Recebe o peso e a altura
-    const peso = parseFloat(args[0]);
-    const altura = parseFloat(args[1]) / 100;
-
-    // Calcula o IMC e exibe o resultado
-    const resultado = calcularIMC(peso, altura);
-    console.log(resultado);
-}
-
-calculadora();
+app.listen(port, () => {
+  console.log(`Servidor rodando em http://localhost:${port}`);
+});
